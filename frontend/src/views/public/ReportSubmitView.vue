@@ -3,11 +3,10 @@
     <div class="card">
       <div class="header-row">
         <h1 class="title">Kirim Laporan Anonim</h1>
-        <span class="badge">MVP</span>
       </div>
 
       <p class="muted">
-        Ceritakan kronologi dengan detail. Backend akan memproses klasifikasi skenario 1/2/3 sesuai plan.
+        Ceritakan kronologi dengan detail.
       </p>
 
       <form class="section-spacer" @submit.prevent="onSubmit">

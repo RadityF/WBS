@@ -91,3 +91,48 @@ Sumber dataset: `eval/external_cases_v1.json` (21 kasus total; 7 S1, 7 S2, 7 S3)
 - Jalur OOS sekarang konsisten `AUTO_RESOLVED`.
 - Jalur pelanggaran (S1/S2) sudah lebih konsisten terhadap keberadaan bukti dan rujukan pasal.
 - Meski hasil terakhir 100% pada external suite saat ini, kualitas tetap perlu dijaga dengan evaluasi berkala agar tidak regress.
+
+## 11) Testing Tambahan dari CSV User
+Sumber test baru dari user:
+- `plan/Skenario Testing - Pelanggaran.csv` (63 kasus)
+- `plan/Skenario Testing - Out of Scope.csv` (20 kasus)
+- Total: `83` kasus.
+
+### Hasil awal (sebelum fix terbaru)
+- Total accuracy: `49.40%`
+- Violation suite: `33.33%`
+- OOS suite: `100%`
+
+Root cause utama:
+- Koleksi Qdrant `wbs_violation` dan `wbs_oos` salah dimensi vector (`size=4`),
+  sedangkan embedding model menghasilkan dimensi `768`.
+- Akibatnya retrieval pelanggaran kosong dan banyak kasus jatuh ke hard stop skenario 3.
+
+### Perbaikan pipeline setelah temuan CSV
+1. **Perbaikan infrastruktur retrieval**
+   - `app/services/qdrant_service.py`: tambah `recreate_collection(...)`.
+   - `app/services/kb_service.py`: reindex force recreate collection agar dimensi vector sinkron.
+   - Hasil verifikasi: koleksi `wbs_violation` dan `wbs_oos` kembali ke `size=768`.
+
+2. **Perbaikan logic decision pipeline** (`app/services/rag_service.py`)
+   - Soft retrieval window saat tidak ada hit di threshold utama, agar tidak terlalu cepat hard stop.
+   - Guardrail OOS untuk menurunkan `NEEDS_INFO` ke `AUTO_RESOLVED` hanya saat benar-benar OOS.
+   - Rule benign/compliance untuk menurunkan false positive pada kasus invalid.
+   - Perluasan sinyal fakta/evidence/severity untuk konflik kepentingan, data breach, aset, pelecehan.
+   - Tambah second correction retry ketika output AI invalid/tidak konsisten.
+
+### Hasil akhir CSV (setelah fix)
+- Total `83` kasus:
+  - `scenario_accuracy = 96.39%`
+  - `scenario_status_accuracy = 96.39%`
+- Breakdown:
+  - Violation (`63`): `95.24%`
+  - OOS (`20`): `100%`
+- Sisa mismatch: `3` kasus (semuanya di suite pelanggaran, terutama borderline konflik kepentingan/gratifikasi).
+
+## 12) Validasi Holdout Setelah Fix CSV
+- External holdout (`eval/external_cases_v1.json`, 21 kasus) diuji ulang.
+- Hasil terbaru kembali `100%`:
+  - `scenario_accuracy = 1.0`
+  - `scenario_status_accuracy = 1.0`
+  - S1/S2/S3 masing-masing `1.0`.

@@ -18,7 +18,7 @@ Bangun backend MVP berbasis FastAPI untuk pelapor anonim dengan alur:
 - [x] Pelapor anonim submit narasi + bukti opsional
 - [x] Generate `ticket_id` + PIN (PIN disimpan hash)
 - [x] RAG retrieval + LLM classification (scenario 1/2/3)
-- [x] Follow-up interaktif untuk scenario 2 (max 3x)
+- [x] Follow-up int
 - [x] Auto-resolve untuk scenario 3
 - [x] Admin login + list/detail/update status kasus
 - [x] Endpoint reindex Knowledge Base ke Qdrant

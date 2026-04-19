@@ -1,7 +1,7 @@
 <template>
   <header class="topbar">
     <div class="topbar-inner">
-      <div class="brand">WBS Frontend MVP</div>
+      <div class="brand">Whistleblowing System</div>
       <nav class="nav">
         <RouterLink class="nav-link" to="/report/new">Buat Laporan</RouterLink>
         <RouterLink class="nav-link" to="/report/status">Cek Status</RouterLink>

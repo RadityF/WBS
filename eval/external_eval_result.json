@@ -35,8 +35,8 @@
       "scenario_ok": true,
       "status_ok": true,
       "both_ok": true,
-      "ticket_id": "WBS-20260417-102758-FF1B",
-      "response_excerpt": "Memastikan bukti chat dan mutasi rekening dianalisis lebih lanjut untuk mengidentifikasi pihak penerima dan tujuan dana."
+      "ticket_id": "WBS-20260419-113123-E6C4",
+      "response_excerpt": "Memastikan bukti chat dan mutasi rekening dianalisis lebih lanjut untuk mengidentifikasi pihak penerima dan sumber dana."
     },
     {
       "id": "EXT-S1-02",
@@ -48,8 +48,8 @@
       "scenario_ok": true,
       "status_ok": true,
       "both_ok": true,
-      "ticket_id": "WBS-20260417-102810-753E",
-      "response_excerpt": "Investigasi forensik terhadap log endpoint dan rekaman CCTV untuk mengidentifikasi pelaku dan mengamankan data."
+      "ticket_id": "WBS-20260419-113139-E245",
+      "response_excerpt": "Memastikan keamanan data yang dicuri dan mengidentifikasi pelaku."
     },
     {
       "id": "EXT-S1-03",
@@ -61,7 +61,7 @@
       "scenario_ok": true,
       "status_ok": true,
       "both_ok": true,
-      "ticket_id": "WBS-20260417-102825-C77E",
+      "ticket_id": "WBS-20260419-113154-9250",
       "response_excerpt": "Memerlukan investigasi lebih lanjut untuk mengumpulkan bukti pendukung (GPS, foto loading) dan klarifikasi dari pihak terkait."
     },
     {
@@ -74,8 +74,8 @@
       "scenario_ok": true,
       "status_ok": true,
       "both_ok": true,
-      "ticket_id": "WBS-20260417-102837-C8E0",
-      "response_excerpt": "Meminta pelapor untuk segera menyerahkan semua bukti (invoice vendor asli dan versi final) untuk proses investigasi lebih lanjut."
+      "ticket_id": "WBS-20260419-113207-A68C",
+      "response_excerpt": "Memerlukan investigasi lebih lanjut untuk memverifikasi bukti invoice dan mengidentifikasi pihak yang bertanggung jawab."
     },
     {
       "id": "EXT-S1-05",
@@ -87,8 +87,8 @@
       "scenario_ok": true,
       "status_ok": true,
       "both_ok": true,
-      "ticket_id": "WBS-20260417-102851-C341",
-      "response_excerpt": "Kami akan segera memproses laporan ini sesuai prosedur Whistleblowing System dan melakukan investigasi mendalam."
+      "ticket_id": "WBS-20260419-113222-50E5",
+      "response_excerpt": "Kami mencatat laporan Anda dan akan segera memprosesnya sesuai prosedur Whistleblowing System."
     },
     {
       "id": "EXT-S1-06",
@@ -100,7 +100,7 @@
       "scenario_ok": true,
       "status_ok": true,
       "both_ok": true,
-      "ticket_id": "WBS-20260417-102904-9238",
+      "ticket_id": "WBS-20260419-113236-FDC5",
       "response_excerpt": "Melakukan investigasi lebih lanjut mengenai sifat hadiah dan nilai yang diterima."
     },
     {
@@ -113,8 +113,8 @@
       "scenario_ok": true,
       "status_ok": true,
       "both_ok": true,
-      "ticket_id": "WBS-20260417-102916-3F38",
-      "response_excerpt": "Laporan ini akan ditindaklanjuti untuk memverifikasi proses pemilihan vendor dan kepatuhan terhadap kebijakan konflik kepentingan perusahaan."
+      "ticket_id": "WBS-20260419-113248-97C2",
+      "response_excerpt": "Kami akan meninjau laporan ini terkait potensi konflik kepentingan dan prosedur pemilihan vendor."
     },
     {
       "id": "EXT-S2-01",
@@ -126,8 +126,8 @@
       "scenario_ok": true,
       "status_ok": true,
       "both_ok": true,
-      "ticket_id": "WBS-20260417-102927-11B4",
-      "response_excerpt": "Mohon berikan detail lebih lanjut mengenai identitas sales, pihak klien, jumlah uang, tanggal kejadian, dan lokasi kejadian agar investigasi dapat dilanjutkan."
+      "ticket_id": "WBS-20260419-113259-C4E8",
+      "response_excerpt": "Mohon berikan detail lebih lanjut mengenai identitas sales, pihak klien, jumlah uang, dan waktu kejadian agar investigasi dapat dilanjutkan."
     },
     {
       "id": "EXT-S2-02",
@@ -139,8 +139,8 @@
       "scenario_ok": true,
       "status_ok": true,
       "both_ok": true,
-      "ticket_id": "WBS-20260417-102940-96E5",
-      "response_excerpt": "Meminta detail lebih lanjut mengenai siapa yang memberikan, nilai hadiah, dan konteks pemberian tersebut."
+      "ticket_id": "WBS-20260419-113312-0CCB",
+      "response_excerpt": "Kami akan melakukan klarifikasi lebih lanjut mengenai detail pemberian, pihak yang terlibat, dan konteks pemberian tersebut."
     },
     {
       "id": "EXT-S2-03",
@@ -152,7 +152,7 @@
       "scenario_ok": true,
       "status_ok": true,
       "both_ok": true,
-      "ticket_id": "WBS-20260417-102953-9CFF",
+      "ticket_id": "WBS-20260419-113326-0A09",
       "response_excerpt": "Laporan Anda terindikasi pelanggaran, namun masih ambigu. Mohon lengkapi detail inti kejadian."
     },
     {
@@ -165,7 +165,7 @@
       "scenario_ok": true,
       "status_ok": true,
       "both_ok": true,
-      "ticket_id": "WBS-20260417-103006-A450",
+      "ticket_id": "WBS-20260419-113340-214E",
       "response_excerpt": "Meminta detail lebih lanjut mengenai identitas pihak yang terlibat, data yang dipindahkan, dan waktu kejadian."
     },
     {
@@ -178,8 +178,8 @@
       "scenario_ok": true,
       "status_ok": true,
       "both_ok": true,
-      "ticket_id": "WBS-20260417-103018-2B65",
-      "response_excerpt": "Meminta pelapor untuk segera menyediakan bukti konkret berupa angka atau dokumen yang menunjukkan markup biaya tersebut."
+      "ticket_id": "WBS-20260419-113353-FA13",
+      "response_excerpt": "Mohon berikan detail lebih lanjut mengenai bukti yang Anda miliki, seperti angka pasti markup, identitas tim yang terlibat, waktu kejadian, dan lokasi proyek."
     },
     {
       "id": "EXT-S2-06",
@@ -191,7 +191,7 @@
       "scenario_ok": true,
       "status_ok": true,
       "both_ok": true,
-      "ticket_id": "WBS-20260417-103031-CE71",
+      "ticket_id": "WBS-20260419-113408-B343",
       "response_excerpt": "Kami menangkap indikasi pelanggaran, namun masih perlu detail tambahan agar kasus bisa diproses sebagai laporan valid."
     },
     {
@@ -204,8 +204,8 @@
       "scenario_ok": true,
       "status_ok": true,
       "both_ok": true,
-      "ticket_id": "WBS-20260417-103041-3CA7",
-      "response_excerpt": "Kami menghargai laporan Anda. Mohon segera sediakan bukti konkret (screenshot) agar kami dapat melakukan investigasi lebih lanjut."
+      "ticket_id": "WBS-20260419-113419-F4B3",
+      "response_excerpt": "Kami akan memproses laporan ini dan meminta pelapor untuk segera melengkapi bukti (screenshot) agar investigasi dapat dilakukan secara komprehensif."
     },
     {
       "id": "EXT-S3-01",
@@ -217,8 +217,8 @@
       "scenario_ok": true,
       "status_ok": true,
       "both_ok": true,
-      "ticket_id": "WBS-20260417-103102-C455",
-      "response_excerpt": "Kami akan segera memproses laporan kerusakan fasilitas ini untuk perbaikan secepatnya."
+      "ticket_id": "WBS-20260419-113432-D93E",
+      "response_excerpt": "Kami akan segera memproses laporan kerusakan fasilitas ini dan menjadwalkan teknisi untuk perbaikan secepatnya."
     },
     {
       "id": "EXT-S3-02",
@@ -230,7 +230,7 @@
       "scenario_ok": true,
       "status_ok": true,
       "both_ok": true,
-      "ticket_id": "WBS-20260417-103109-6046",
+      "ticket_id": "WBS-20260419-113440-DB07",
       "response_excerpt": "Laporan Anda kami kategorikan sebagai non-pelanggaran etik/hukum. Silakan gunakan kanal operasional yang sesuai (GA/HR/IT)."
     },
     {
@@ -243,7 +243,7 @@
       "scenario_ok": true,
       "status_ok": true,
       "both_ok": true,
-      "ticket_id": "WBS-20260417-103124-21E3",
+      "ticket_id": "WBS-20260419-113502-85DE",
       "response_excerpt": "Laporan Anda mengenai Fasilitas Parkir/Transportasi telah kami identifikasi. Silakan hubungi tim Building Management atau bagian Operasional/GA untuk penanganan lebih lanjut."
     },
     {
@@ -256,7 +256,7 @@
       "scenario_ok": true,
       "status_ok": true,
       "both_ok": true,
-      "ticket_id": "WBS-20260417-103143-B118",
+      "ticket_id": "WBS-20260419-113524-1E7A",
       "response_excerpt": "Terima kasih atas masukannya. Keluhan mengenai Layanan Pantry/Catering dapat disampaikan langsung melalui buku evaluasi di area kantin atau email ke bagian Rumah Tangga/GA."
     },
     {
@@ -269,7 +269,7 @@
       "scenario_ok": true,
       "status_ok": true,
       "both_ok": true,
-      "ticket_id": "WBS-20260417-103200-07D4",
+      "ticket_id": "WBS-20260419-113543-1AC7",
       "response_excerpt": "Laporan Anda berkaitan dengan Kebijakan Remunerasi. Ini merupakan ranah kebijakan perusahaan. Silakan ajukan pertanyaan atau aspirasi Anda melalui sesi Townhall atau hubungi bagian"
     },
     {
@@ -282,7 +282,7 @@
       "scenario_ok": true,
       "status_ok": true,
       "both_ok": true,
-      "ticket_id": "WBS-20260417-103216-8CA4",
+      "ticket_id": "WBS-20260419-113600-1996",
       "response_excerpt": "Kami menyarankan Anda berkonsultasi dengan HR Business Partner atau atasan langsung untuk mediasi."
     },
     {
@@ -295,7 +295,7 @@
       "scenario_ok": true,
       "status_ok": true,
       "both_ok": true,
-      "ticket_id": "WBS-20260417-103233-60D8",
+      "ticket_id": "WBS-20260419-113617-001F",
       "response_excerpt": "Terima kasih atas masukannya. Keluhan mengenai Layanan Pantry/Catering dapat disampaikan langsung melalui buku evaluasi di area kantin atau email ke bagian Rumah Tangga/GA."
     }
   ]

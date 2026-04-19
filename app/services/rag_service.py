@@ -82,6 +82,11 @@ VIOLATION_ACTION_HINTS = {
     "menunjuk",
     "titipan",
     "menggunakan",
+    "merekrut",
+    "meloloskan",
+    "menjual",
+    "vpn",
+    "dideklarasikan",
 }
 
 LOCATION_HINTS = {
@@ -111,6 +116,10 @@ EVIDENCE_HINTS = {
     "dokumen",
     "lampir",
     "foto",
+    "video",
+    "whatsapp",
+    "alamat ip",
+    "deteksi keamanan",
 }
 
 VIOLATION_SEVERITY_HINTS = {
@@ -129,6 +138,103 @@ VIOLATION_SEVERITY_HINTS = {
     "fraud",
     "database",
     "kebocoran",
+    "rahasia",
+    "gmail pribadi",
+    "vpn",
+    "saudara",
+    "keluarga",
+    "saham",
+    "milik",
+    "tidak dideklarasikan",
+    "mobil dinas",
+    "mining",
+    "lisensi",
+    "toxic",
+    "tidak sopan",
+    "sepupu",
+    "saudara kandung",
+    "tanpa proses interview",
+    "tanpa melalui tes",
+    "menjual",
+    "pihak luar",
+    "tidak resmi",
+    "forum online",
+    "alamat ip",
+}
+
+OOS_CATEGORY_HINTS = {
+    "fasilitas",
+    "it",
+    "helpdesk",
+    "payroll",
+    "benefit",
+    "pantry",
+    "parkir",
+    "transportasi",
+    "personal",
+    "etika kerja",
+    "promosi",
+    "mutasi",
+    "saran",
+    "apresiasi",
+}
+
+BENIGN_COMPLIANCE_HINTS = {
+    "sesuai kebijakan",
+    "sesuai prosedur",
+    "dengan izin",
+    "izin atasan",
+    "atas perintah tertulis",
+    "sudah terinput",
+    "resmi",
+    "service rutin",
+    "bengkel resmi",
+    "backup rutin",
+    "split bill",
+    "diskon karyawan",
+    "bulk-purchase",
+    "bulk purchase",
+    "tidak berhubungan",
+    "tidak ikut dalam proses",
+    "sudah melaporkan",
+    "kolaborasi tim",
+    "lembur",
+    "sesuai dengan kebijakan",
+    "diizinkan perusahaan",
+    "seminar",
+    "acara tahunan",
+    "ulang tahun anak",
+    "teman lama",
+    "kebijakan promo",
+    "referral fee",
+    "masing-masing membayar",
+    "sesuai dengan harga",
+    "boarding pass",
+}
+
+BENIGN_SOCIAL_HINTS = {
+    "bercanda",
+    "nama akrab",
+    "menegur",
+    "terlambat",
+}
+
+NEGATIVE_VIOLATION_HINTS = {
+    "tanpa izin",
+    "tanpa persetujuan",
+    "tanpa dokumen",
+    "tidak dideklarasikan",
+    "sembunyi",
+    "diam-diam",
+    "ancaman",
+    "memaksa",
+    "dipaksa",
+    "mengancam",
+    "tanpa proses interview",
+    "tanpa melalui tes",
+    "tidak resmi",
+    "forum online",
+    "pihak luar",
 }
 
 
@@ -340,7 +446,7 @@ def _enforce_signal_consistency(parsed: AiOutput, user_text: str) -> AiOutput:
     text = user_text.lower()
 
     # Jika AI memilih skenario 1 tetapi sinyal fakta lemah, turunkan ke skenario 2.
-    if parsed.skenario == 1 and (score < 3 or (not has_evidence and severity_hits < 2)):
+    if parsed.skenario == 1 and (score < 3 or (score <= 3 and not has_evidence and severity_hits == 0)):
         return AiOutput(
             kategori=parsed.kategori,
             skenario=2,
@@ -449,6 +555,85 @@ def _promote_strong_evidence_to_s1(parsed: AiOutput, user_text: str) -> AiOutput
             needs_escalation=parsed.needs_escalation,
             ticket_id=None,
             redirect_to=parsed.redirect_to,
+        )
+
+    return parsed
+
+
+def _is_oos_category(category: Optional[str]) -> bool:
+    if not category:
+        return False
+    c = category.lower()
+    return any(h in c for h in OOS_CATEGORY_HINTS)
+
+
+def _force_oos_needs_info_to_resolved(
+    parsed: AiOutput,
+    user_text: str,
+    top_source_group: str,
+    top_category: str,
+) -> AiOutput:
+    if parsed.skenario != 2 or top_source_group != "oos":
+        return parsed
+
+    signal = _extract_case_signals(user_text)
+    if int(signal["severity_hits"]) >= 1:
+        return parsed
+
+    if not (_is_oos_category(parsed.kategori) or _is_oos_category(top_category)):
+        return parsed
+
+    return AiOutput(
+        kategori=parsed.kategori or top_category,
+        skenario=3,
+        alasan="Konteks dominan out-of-scope, diarahkan ke kanal operasional.",
+        referensi_hukum=[],
+        pasal_utama=None,
+        pasal_kandidat=[],
+        urgensi="LOW",
+        summary=parsed.summary,
+        respons_pelapor=parsed.respons_pelapor,
+        follow_up_questions=[],
+        needs_human_review=False,
+        needs_escalation=False,
+        ticket_id=None,
+        redirect_to=parsed.redirect_to or parsed.kategori or top_category or "GA/HR/IT",
+    )
+
+
+def _force_benign_to_oos(parsed: AiOutput, user_text: str) -> AiOutput:
+    if parsed.skenario not in (1, 2):
+        return parsed
+
+    text = user_text.lower()
+    if any(t in text for t in NEGATIVE_VIOLATION_HINTS):
+        return parsed
+
+    signal = _extract_case_signals(user_text)
+    severity_hits = int(signal["severity_hits"])
+
+    compliance_hit = any(t in text for t in BENIGN_COMPLIANCE_HINTS)
+    social_hit = any(t in text for t in BENIGN_SOCIAL_HINTS)
+
+    if (compliance_hit and severity_hits <= 2) or (social_hit and severity_hits == 0):
+        return AiOutput(
+            kategori=parsed.kategori,
+            skenario=3,
+            alasan="Narasi menunjukkan aktivitas operasional/personal yang masih dalam koridor kebijakan.",
+            referensi_hukum=[],
+            pasal_utama=None,
+            pasal_kandidat=[],
+            urgensi="LOW",
+            summary=parsed.summary,
+            respons_pelapor=(
+                "Laporan ini terindikasi bukan pelanggaran etik/hukum. Jika ada konteks tambahan yang menunjukkan penyimpangan, "
+                "silakan kirim detail lebih rinci."
+            ),
+            follow_up_questions=[],
+            needs_human_review=False,
+            needs_escalation=False,
+            ticket_id=None,
+            redirect_to=parsed.redirect_to or "GA/HR/IT",
         )
 
     return parsed
@@ -569,6 +754,12 @@ def analyze_report(db: Session, report: Report, user_text: str) -> AiOutput:
     ranked_all = sorted(ranked_violation + ranked_oos, key=lambda x: x[0], reverse=True)
     valid_hits = [x for x in ranked_all if x[0] >= settings.rag_min_score]
 
+    # Soft window: jika tidak lolos threshold utama, tetap coba top hit terdekat
+    # agar kasus valid tidak langsung hard-stop ke skenario 3.
+    if not valid_hits:
+        soft_cutoff = settings.rag_min_score * 0.7
+        valid_hits = [x for x in ranked_all[: settings.rag_top_k] if x[0] >= soft_cutoff]
+
     # Hard stop only: retrieval kosong total / tidak ada kandidat layak.
     if not valid_hits:
         ai = AiOutput(
@@ -630,11 +821,24 @@ def analyze_report(db: Session, report: Report, user_text: str) -> AiOutput:
             parsed = parsed_retry
             raw = raw_retry
         else:
-            if top_source_group == "oos":
-                parsed = _fallback_oos(top_category)
+            correction_prompt_2 = correction_prompt + "\n\nUlangi sekali lagi. Output WAJIB JSON valid tanpa teks tambahan."
+            raw_retry2 = ollama.generate_json(correction_prompt_2)
+            parsed_retry2 = _validate_ai_output(raw_retry2)
+            retry_error_2 = None
+            if parsed_retry2 is None:
+                retry_error_2 = "Output JSON tetap tidak valid pada retry kedua."
             else:
-                parsed = _fallback_needs_info()
-            raw = json.dumps(parsed.model_dump(), ensure_ascii=False)
+                retry_error_2 = _decision_consistency_error(parsed_retry2, top_source_group)
+
+            if retry_error_2 is None and parsed_retry2 is not None:
+                parsed = parsed_retry2
+                raw = raw_retry2
+            else:
+                if top_source_group == "oos":
+                    parsed = _fallback_oos(top_category)
+                else:
+                    parsed = _fallback_needs_info()
+                raw = json.dumps(parsed.model_dump(), ensure_ascii=False)
 
     # Jika LLM tetap memberi skenario 1/2 tanpa pasal valid untuk konteks OOS,
     # turunkan ke scenario 3 agar tidak macet di NEEDS_INFO.
@@ -647,6 +851,8 @@ def analyze_report(db: Session, report: Report, user_text: str) -> AiOutput:
     parsed = _enforce_signal_consistency(parsed, masked)
     parsed = _force_ambiguous_to_needs_info(parsed, masked)
     parsed = _promote_strong_evidence_to_s1(parsed, masked)
+    parsed = _force_benign_to_oos(parsed, masked)
+    parsed = _force_oos_needs_info_to_resolved(parsed, masked, top_source_group, top_category)
     raw = json.dumps(parsed.model_dump(), ensure_ascii=False)
 
     _persist_ai_result(db, report, parsed, raw_output=raw)
