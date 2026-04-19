@@ -1,0 +1,10 @@
+export const ADMIN_STATUS_OPTIONS = [
+  "SUBMITTED",
+  "AI_VALIDATED",
+  "NEEDS_INFO",
+  "NEEDS_REVIEW",
+  "IN_REVIEW",
+  "RESOLVED",
+  "ARCHIVE",
+  "AUTO_RESOLVED",
+];

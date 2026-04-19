@@ -1,0 +1,107 @@
+[
+  {
+    "id": "EXT-S1-01",
+    "expected_scenario": 1,
+    "text": "Supervisor Purchasing bernama D mengaku menerima transfer Rp25 juta dari vendor CV Maju Jaya tanggal 12 Februari 2026 malam untuk memenangkan tender. Bukti chat dan mutasi rekening saya lampirkan."
+  },
+  {
+    "id": "EXT-S1-02",
+    "expected_scenario": 1,
+    "text": "Staff IT inisial AR menyalin file Database Klien 2026 ke SSD pribadi pada 3 April jam 22:40 di ruang server. Ada rekaman CCTV dan log endpoint security."
+  },
+  {
+    "id": "EXT-S1-03",
+    "expected_scenario": 1,
+    "text": "Kepala gudang memakai truk operasional kantor untuk mengantar barang usaha pribadinya setiap Sabtu, terlihat dari GPS kendaraan dan foto loading di luar jam kerja."
+  },
+  {
+    "id": "EXT-S1-04",
+    "expected_scenario": 1,
+    "text": "Manager Finance menaikkan nilai invoice maintenance dari 48 juta jadi 86 juta pada laporan Maret lalu mengambil selisih. Saya punya versi invoice vendor asli dan versi final."
+  },
+  {
+    "id": "EXT-S1-05",
+    "expected_scenario": 1,
+    "text": "Atasan saya menyentuh bahu dan pinggang saya berulang saat meeting tertutup di ruang 5A tanggal 9 Mei pukul 16.30 sambil mengirim pesan bernada seksual."
+  },
+  {
+    "id": "EXT-S1-06",
+    "expected_scenario": 1,
+    "text": "Direktur proyek menerima jam tangan mewah dari vendor PT Sumber Prima setelah adendum kontrak disetujui. Kejadian di restoran hotel pada 21 Januari, ada dua saksi."
+  },
+  {
+    "id": "EXT-S1-07",
+    "expected_scenario": 1,
+    "text": "Manajer HR menunjuk vendor training milik adiknya tanpa evaluasi teknis dan menolak vendor lain walau skornya lebih tinggi. Dokumen komparasi vendor tersedia."
+  },
+  {
+    "id": "EXT-S2-01",
+    "expected_scenario": 2,
+    "text": "Kayaknya ada orang sales kasih uang pelicin ke pihak klien biar PO cepat keluar, tapi saya belum tahu siapa dan kapan pastinya."
+  },
+  {
+    "id": "EXT-S2-02",
+    "expected_scenario": 2,
+    "text": "Saya dengar ada hadiah dari vendor ke salah satu manager setelah negosiasi kontrak, tapi infonya masih dari obrolan internal."
+  },
+  {
+    "id": "EXT-S2-03",
+    "expected_scenario": 2,
+    "text": "Proses pemilihan vendor event diduga ada titipan dari atasan, saya belum pegang dokumen pembanding."
+  },
+  {
+    "id": "EXT-S2-04",
+    "expected_scenario": 2,
+    "text": "Ada indikasi data customer dipindah keluar kantor, saya cuma lihat harddisk eksternal dibawa pulang tanpa izin."
+  },
+  {
+    "id": "EXT-S2-05",
+    "expected_scenario": 2,
+    "text": "Katanya biaya proyek di-markup oleh tim tertentu, tapi saya belum dapat bukti angka pastinya."
+  },
+  {
+    "id": "EXT-S2-06",
+    "expected_scenario": 2,
+    "text": "Saya curiga kendaraan kantor sering dipakai urusan pribadi malam hari, belum tahu sopir dan tanggalnya."
+  },
+  {
+    "id": "EXT-S2-07",
+    "expected_scenario": 2,
+    "text": "Sepertinya ada komentar seksual dari atasan ke junior lewat chat, tapi saya belum lihat screenshot asli."
+  },
+  {
+    "id": "EXT-S3-01",
+    "expected_scenario": 3,
+    "text": "AC ruang kerja lantai 7 mati total dari pagi, ruangan jadi panas dan pekerjaan terganggu."
+  },
+  {
+    "id": "EXT-S3-02",
+    "expected_scenario": 3,
+    "text": "Saya lupa password email kantor dan OTP tidak masuk, mohon bantu reset akun."
+  },
+  {
+    "id": "EXT-S3-03",
+    "expected_scenario": 3,
+    "text": "Parkiran motor selalu penuh jam masuk kantor, tolong dibuatkan area tambahan."
+  },
+  {
+    "id": "EXT-S3-04",
+    "expected_scenario": 3,
+    "text": "Menu kantin minggu ini kurang layak dan sering kehabisan sebelum jam makan siang."
+  },
+  {
+    "id": "EXT-S3-05",
+    "expected_scenario": 3,
+    "text": "Saya tidak puas dengan skema bonus tahun ini, mohon dijelaskan rumus perhitungannya."
+  },
+  {
+    "id": "EXT-S3-06",
+    "expected_scenario": 3,
+    "text": "Rekan saya bicara terlalu keras saat telepon dan bikin saya susah fokus kerja."
+  },
+  {
+    "id": "EXT-S3-07",
+    "expected_scenario": 3,
+    "text": "Saya punya ide aplikasi internal untuk pemesanan pantry supaya lebih efisien."
+  }
+]
