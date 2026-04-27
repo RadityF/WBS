@@ -357,13 +357,14 @@ th {
 
 .process-flow {
   display: grid;
-  grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 0.45rem;
 }
 
 .flow-step {
-  min-height: 74px;
+  height: 78px;
+  min-width: 0;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: #fff;
@@ -373,6 +374,10 @@ th {
   align-content: center;
   text-align: center;
   color: var(--muted);
+}
+
+.flow-step span {
+  line-height: 1.2;
 }
 
 .flow-step strong {

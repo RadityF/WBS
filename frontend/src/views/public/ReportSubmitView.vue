@@ -11,13 +11,13 @@
       </p>
 
       <div class="process-flow section-spacer" aria-label="Alur pelaporan">
-        <div class="flow-step active"><strong>1</strong><span>Tulis laporan</span></div>
+        <div class="flow-step active"><strong>1</strong><span>Menulis laporan</span></div>
         <div class="flow-line"></div>
-        <div class="flow-step"><strong>2</strong><span>Validasi awal AI</span></div>
+        <div class="flow-step"><strong>2</strong><span>Validasi awal</span></div>
         <div class="flow-line"></div>
-        <div class="flow-step"><strong>3</strong><span>Klarifikasi bila perlu</span></div>
+        <div class="flow-step"><strong>3</strong><span>Klarifikasi</span></div>
         <div class="flow-line"></div>
-        <div class="flow-step"><strong>4</strong><span>Review admin</span></div>
+        <div class="flow-step"><strong>4</strong><span>Laporan diterima</span></div>
       </div>
 
       <form class="section-spacer" @submit.prevent="onSubmit">
