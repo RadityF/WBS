@@ -22,6 +22,11 @@ export async function updateAdminCaseStatus(ticketId, payload) {
   return data;
 }
 
+export async function sendAdminCaseMessage(ticketId, payload) {
+  const { data } = await http.post(`/v1/admin/cases/${encodeURIComponent(ticketId)}/message`, payload);
+  return data;
+}
+
 export async function triggerKbReindex() {
   const { data } = await http.post("/v1/kb/reindex");
   return data;

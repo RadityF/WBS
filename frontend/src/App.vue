@@ -3,10 +3,14 @@
     <div class="topbar-inner">
       <div class="brand">Whistleblowing System</div>
       <nav class="nav">
-        <RouterLink class="nav-link" to="/report/new">Buat Laporan</RouterLink>
-        <RouterLink class="nav-link" to="/report/status">Cek Status</RouterLink>
-        <RouterLink class="nav-link" to="/admin/cases">Admin Cases</RouterLink>
-        <RouterLink class="nav-link" to="/admin/kb">Admin KB</RouterLink>
+        <template v-if="auth.isAuthenticated">
+          <RouterLink class="nav-link" to="/admin/cases">Admin Case</RouterLink>
+          <RouterLink class="nav-link" to="/admin/kb">Admin KB</RouterLink>
+        </template>
+        <template v-else-if="!isAdminRoute">
+          <RouterLink class="nav-link" to="/report/new">Buat Laporan</RouterLink>
+          <RouterLink class="nav-link" to="/report/status">Cek Status</RouterLink>
+        </template>
         <button v-if="auth.isAuthenticated" class="btn ghost small" type="button" @click="logout">
           Logout
         </button>
@@ -21,10 +25,12 @@
 
 <script setup>
 import { useRouter } from "vue-router";
+import { computed } from "vue";
 import { useAdminAuthStore } from "./stores/adminAuth";
 
 const auth = useAdminAuthStore();
 const router = useRouter();
+const isAdminRoute = computed(() => router.currentRoute.value.path.startsWith("/admin"));
 
 function logout() {
   auth.logout();

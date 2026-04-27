@@ -107,3 +107,8 @@ class AdminCaseDetail(BaseModel):
 class AdminUpdateStatusRequest(BaseModel):
     new_status: str
     notes: Optional[str] = None
+
+
+class AdminMessageRequest(BaseModel):
+    message: str = Field(min_length=3, max_length=3000)
+    mark_needs_info: bool = True

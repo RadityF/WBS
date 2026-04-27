@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.db import get_db
 from app.models import Report, ReportAttachment, ReportFollowupQuestion, ReportMessage
-from app.schemas import GenericMessage, ReplyRequest, ReportStatusResponse, SubmitReportResponse
+from app.schemas import GenericMessage, ReportStatusResponse, SubmitReportResponse
 from app.security import hash_value, verify_value
 from app.services.rag_service import analyze_report, can_access_with_pin, lock_pin_if_needed
 from app.services.utils import generate_pin, generate_ticket_id
@@ -59,20 +59,7 @@ def submit_report(
         )
     )
 
-    if attachments:
-        for file in attachments:
-            filename = f"{ticket_id}_{int(datetime.utcnow().timestamp())}_{file.filename}"
-            safe_path = os.path.join(settings.upload_dir, filename)
-            with open(safe_path, "wb") as out:
-                shutil.copyfileobj(file.file, out)
-            db.add(
-                ReportAttachment(
-                    report_id=report.id,
-                    filename=file.filename,
-                    saved_path=safe_path,
-                    content_type=file.content_type,
-                )
-            )
+    _save_attachments(db, report, ticket_id, attachments)
 
     ai_result = analyze_report(db, report, narrative)
     db.commit()
@@ -83,6 +70,26 @@ def submit_report(
         status=report.status,
         message=ai_result.respons_pelapor,
     )
+
+
+def _save_attachments(db: Session, report: Report, ticket_id: str, attachments: Optional[list[UploadFile]]) -> None:
+    if not attachments:
+        return
+
+    os.makedirs(settings.upload_dir, exist_ok=True)
+    for file in attachments:
+        filename = f"{ticket_id}_{int(datetime.utcnow().timestamp())}_{file.filename}"
+        safe_path = os.path.join(settings.upload_dir, filename)
+        with open(safe_path, "wb") as out:
+            shutil.copyfileobj(file.file, out)
+        db.add(
+            ReportAttachment(
+                report_id=report.id,
+                filename=file.filename,
+                saved_path=safe_path,
+                content_type=file.content_type,
+            )
+        )
 
 
 def _get_report_by_ticket(db: Session, ticket_id: str) -> Report:
@@ -132,7 +139,13 @@ def get_report_status(ticket_id: str, pin: str, db: Session = Depends(get_db)):
 
 
 @router.post("/{ticket_id}/reply", response_model=GenericMessage)
-def reply_followup(ticket_id: str, payload: ReplyRequest, db: Session = Depends(get_db)):
+def reply_followup(
+    ticket_id: str,
+    pin: str = Form(...),
+    message: str = Form(..., min_length=3, max_length=3000),
+    attachments: Optional[list[UploadFile]] = File(default=None),
+    db: Session = Depends(get_db),
+):
     report = _get_report_by_ticket(db, ticket_id)
     if report.status != "NEEDS_INFO":
         raise HTTPException(status_code=400, detail="Kasus tidak dalam status klarifikasi")
@@ -141,7 +154,7 @@ def reply_followup(ticket_id: str, payload: ReplyRequest, db: Session = Depends(
     if not can_access:
         raise HTTPException(status_code=429, detail=reason)
 
-    if not verify_value(payload.pin, report.pin_hash):
+    if not verify_value(pin, report.pin_hash):
         report.pin_failed_attempts += 1
         lock_pin_if_needed(report)
         db.commit()
@@ -155,9 +168,10 @@ def reply_followup(ticket_id: str, payload: ReplyRequest, db: Session = Depends(
             report_id=report.id,
             sender_type="reporter",
             message_type="followup_reply",
-            content=payload.message,
+            content=message,
         )
     )
+    _save_attachments(db, report, ticket_id, attachments)
 
     unanswered = (
         db.query(ReportFollowupQuestion)

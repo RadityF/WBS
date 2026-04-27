@@ -11,6 +11,7 @@ export async function submitReport({ narrative, attachments }) {
     headers: {
       "Content-Type": "multipart/form-data",
     },
+    timeout: 120000,
   });
   return data;
 }
@@ -22,7 +23,19 @@ export async function getReportStatus(ticketId, pin) {
   return data;
 }
 
-export async function replyFollowup(ticketId, payload) {
-  const { data } = await http.post(`/v1/reports/${encodeURIComponent(ticketId)}/reply`, payload);
+export async function replyFollowup(ticketId, { pin, message, attachments }) {
+  const formData = new FormData();
+  formData.append("pin", pin);
+  formData.append("message", message);
+  for (const file of attachments || []) {
+    formData.append("attachments", file);
+  }
+
+  const { data } = await http.post(`/v1/reports/${encodeURIComponent(ticketId)}/reply`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    timeout: 120000,
+  });
   return data;
 }

@@ -60,12 +60,12 @@ export const usePublicReportStore = defineStore("public-report", {
         this.statusLoading = false;
       }
     },
-    async sendReply(ticketId, pin, message) {
+    async sendReply(ticketId, pin, message, attachments = []) {
       this.replyLoading = true;
       this.replyError = "";
       this.replyMessage = "";
       try {
-        const data = await replyFollowup(ticketId, { pin, message });
+        const data = await replyFollowup(ticketId, { pin, message, attachments });
         this.replyMessage = data.message || "Balasan terkirim";
         return data;
       } catch (error) {

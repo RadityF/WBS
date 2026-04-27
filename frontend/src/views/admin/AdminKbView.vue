@@ -12,7 +12,9 @@
 
       <div v-if="store.reindexError" class="alert error section-spacer">{{ store.reindexError }}</div>
       <div v-if="store.reindexResult" class="alert success section-spacer">
-        Reindex selesai. Indexed: <strong>{{ store.reindexResult.indexed ?? 0 }}</strong>
+        Reindex selesai. Total: <strong>{{ store.reindexResult.indexed_total ?? 0 }}</strong>
+        <span> | Pelanggaran: <strong>{{ store.reindexResult.indexed_violation ?? 0 }}</strong></span>
+        <span> | OOS: <strong>{{ store.reindexResult.indexed_oos ?? 0 }}</strong></span>
         <span v-if="store.reindexResult.message"> - {{ store.reindexResult.message }}</span>
       </div>
 

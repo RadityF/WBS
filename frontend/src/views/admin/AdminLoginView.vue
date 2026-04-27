@@ -3,10 +3,10 @@
     <div class="card">
       <div class="header-row">
         <h1 class="title">Admin Login</h1>
-        <span class="badge">JWT</span>
+        <span class="badge">Admin</span>
       </div>
 
-      <p class="muted">Gunakan akun admin seed backend (`ADMIN_DEFAULT_USERNAME`).</p>
+      <p class="muted">Masuk menggunakan akun admin yang telah diberikan.</p>
 
       <form class="section-spacer" @submit.prevent="onSubmit">
         <div>

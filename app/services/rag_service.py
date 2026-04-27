@@ -28,6 +28,7 @@ ATURAN WAJIB:
 6. DILARANG pilih skenario 1/2 jika pasal_utama tidak punya `uu` atau `pasal`.
 7. Output HARUS JSON valid sesuai schema. Tanpa teks tambahan.
 8. Bahasa Indonesia, netral, profesional, tidak menghakimi.
+9. Jangan menyatakan dugaan pelapor sebagai fakta final. Gunakan frasa seperti "dugaan", "indikasi", "laporan menyebutkan", atau "terdapat tuduhan" meskipun pelapor menulis "terbukti" atau "telah melakukan".
 
 KRITERIA SKENARIO:
 - Skenario 1: minimal 3 dari 5 terpenuhi (pelaku, jenis pelanggaran, waktu, lokasi, bukti/saksi).
@@ -290,8 +291,8 @@ def _fallback_oos(top_category: Optional[str]) -> AiOutput:
         urgensi="LOW",
         summary=None,
         respons_pelapor=(
-            "Laporan Anda kami kategorikan sebagai non-pelanggaran etik/hukum. "
-            "Silakan gunakan kanal operasional yang sesuai (GA/HR/IT)."
+            "Mohon maaf, laporan Anda belum sesuai dengan kategori pelanggaran etik/hukum dalam kanal WBS. "
+            "Jika isu ini tetap perlu ditangani, Anda dapat menggunakan kanal operasional yang sesuai seperti GA, HR, IT, atau atasan terkait."
         ),
         follow_up_questions=[],
         needs_human_review=False,
@@ -309,7 +310,7 @@ def _fallback_needs_info() -> AiOutput:
         referensi_hukum=[],
         urgensi="MEDIUM",
         summary=None,
-        respons_pelapor="Kami membutuhkan klarifikasi tambahan untuk memproses laporan Anda.",
+        respons_pelapor="Kami membutuhkan klarifikasi tambahan untuk menilai dugaan pelanggaran dalam laporan Anda.",
         follow_up_questions=[
             "Siapa pihak yang Anda laporkan (jabatan/inisial)?",
             "Kapan kejadian terjadi?",
@@ -460,7 +461,7 @@ def _enforce_signal_consistency(parsed: AiOutput, user_text: str) -> AiOutput:
             urgensi="MEDIUM" if parsed.urgensi in ("LOW", "MEDIUM") else parsed.urgensi,
             summary=parsed.summary,
             respons_pelapor=(
-                "Kami menangkap indikasi pelanggaran, namun masih perlu detail tambahan agar kasus bisa diproses sebagai laporan valid."
+                "Kami menangkap indikasi dugaan pelanggaran, namun masih perlu detail tambahan agar kasus bisa diproses sebagai laporan valid."
             ),
             follow_up_questions=[
                 "Siapa pihak yang terlibat (jabatan/inisial)?",
@@ -493,7 +494,7 @@ def _force_ambiguous_to_needs_info(parsed: AiOutput, user_text: str) -> AiOutput
             pasal_kandidat=parsed.pasal_kandidat,
             urgensi="MEDIUM" if parsed.urgensi in ("LOW", "MEDIUM") else parsed.urgensi,
             summary=parsed.summary,
-            respons_pelapor="Laporan Anda terindikasi pelanggaran, namun masih ambigu. Mohon lengkapi detail inti kejadian.",
+            respons_pelapor="Laporan Anda memuat indikasi dugaan pelanggaran, namun masih ambigu. Mohon lengkapi detail inti kejadian.",
             follow_up_questions=[
                 "Siapa pihak yang terlibat (jabatan/inisial)?",
                 "Kapan dan di mana kejadian berlangsung?",
@@ -548,7 +549,7 @@ def _promote_strong_evidence_to_s1(parsed: AiOutput, user_text: str) -> AiOutput
             urgensi=parsed.urgensi,
             summary=parsed.summary,
             respons_pelapor=(
-                "Laporan Anda memenuhi kriteria awal valid dan akan diteruskan untuk proses investigasi."
+                "Laporan Anda memuat dugaan pelanggaran yang memenuhi kriteria awal dan akan diteruskan untuk proses review/investigasi."
             ),
             follow_up_questions=[],
             needs_human_review=parsed.needs_human_review,
@@ -626,8 +627,8 @@ def _force_benign_to_oos(parsed: AiOutput, user_text: str) -> AiOutput:
             urgensi="LOW",
             summary=parsed.summary,
             respons_pelapor=(
-                "Laporan ini terindikasi bukan pelanggaran etik/hukum. Jika ada konteks tambahan yang menunjukkan penyimpangan, "
-                "silakan kirim detail lebih rinci."
+                "Mohon maaf, laporan ini terindikasi bukan pelanggaran etik/hukum dalam kanal WBS. "
+                "Jika ada konteks tambahan yang menunjukkan penyimpangan, silakan kirim detail lebih rinci atau gunakan kanal operasional terkait."
             ),
             follow_up_questions=[],
             needs_human_review=False,
@@ -657,6 +658,67 @@ def _keyword_boost(query_text: str, keywords: list[str]) -> float:
             if k in tokens:
                 matches += 1
     return min(matches * 0.02, 0.08)
+
+
+def _format_law_fragment(value: Optional[str], label: str) -> Optional[str]:
+    if not value:
+        return None
+    cleaned = str(value).strip()
+    if not cleaned:
+        return None
+    if cleaned.lower().startswith(label.lower()):
+        return cleaned
+    return f"{label} {cleaned}"
+
+
+def _build_reason_with_legal_refs(ai: AiOutput) -> str:
+    refs: list[str] = []
+    seen: set[tuple[str, str, str]] = set()
+
+    def _add_ref(uu: Optional[str], pasal: Optional[str], ayat: Optional[str]) -> None:
+        uu_clean = (uu or "").strip()
+        pasal_clean = (pasal or "").strip()
+        ayat_clean = (ayat or "").strip()
+        if not (uu_clean or pasal_clean or ayat_clean):
+            return
+
+        key = (uu_clean.lower(), pasal_clean.lower(), ayat_clean.lower())
+        if key in seen:
+            return
+        seen.add(key)
+
+        segments = []
+        if uu_clean:
+            segments.append(uu_clean)
+        pasal_label = _format_law_fragment(pasal_clean, "Pasal")
+        ayat_label = _format_law_fragment(ayat_clean, "Ayat")
+        if pasal_label:
+            segments.append(pasal_label)
+        if ayat_label:
+            segments.append(ayat_label)
+        if segments:
+            refs.append(" ".join(segments))
+
+    if ai.pasal_utama:
+        _add_ref(ai.pasal_utama.uu, ai.pasal_utama.pasal, ai.pasal_utama.ayat)
+
+    for item in ai.pasal_kandidat:
+        _add_ref(item.uu, item.pasal, item.ayat)
+
+    for item in ai.referensi_hukum:
+        _add_ref(item.uu, item.pasal, item.ayat)
+
+    base_reason = (ai.alasan or "").strip()
+    if not refs:
+        return base_reason
+
+    if "rujukan pasal:" in base_reason.lower():
+        return base_reason
+
+    ref_text = "; ".join(refs)
+    if not base_reason:
+        return f"Rujukan pasal: {ref_text}."
+    return f"{base_reason} Rujukan pasal: {ref_text}."
 
 
 def _rank_hits_with_boost(user_text: str, hits):
@@ -770,8 +832,8 @@ def analyze_report(db: Session, report: Report, user_text: str) -> AiOutput:
             urgensi="LOW",
             summary=None,
             respons_pelapor=(
-                "Laporan Anda belum cukup terhubung ke referensi pelanggaran. "
-                "Silakan tambahkan detail jika ini pelanggaran etik/hukum."
+                "Mohon maaf, laporan Anda belum cukup terhubung ke kategori pelanggaran WBS. "
+                "Jika isu ini bersifat operasional, Anda dapat menghubungi kanal terkait seperti GA, HR, IT, atau atasan langsung."
             ),
             follow_up_questions=[],
             needs_human_review=False,
@@ -871,8 +933,8 @@ def _persist_ai_result(db: Session, report: Report, ai: AiOutput, raw_output: st
     )
     db.flush()
 
-    if ai.follow_up_questions:
-        db.query(ReportFollowupQuestion).filter(ReportFollowupQuestion.report_id == report.id).delete()
+    db.query(ReportFollowupQuestion).filter(ReportFollowupQuestion.report_id == report.id).delete()
+    if ai.skenario == 2 and ai.follow_up_questions:
         for q in ai.follow_up_questions[:3]:
             db.add(ReportFollowupQuestion(report_id=report.id, question=q, answered=False))
 
@@ -882,7 +944,7 @@ def _apply_ai_to_report(db: Session, report: Report, ai: AiOutput) -> None:
     report.scenario = ai.skenario
     report.urgency = ai.urgensi
     report.summary = ai.summary
-    report.reason = ai.alasan
+    report.reason = _build_reason_with_legal_refs(ai)
     report.latest_response_to_reporter = ai.respons_pelapor
 
     if ai.skenario == 1:

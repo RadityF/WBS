@@ -13,6 +13,7 @@ from app.schemas import (
     AdminCaseItem,
     AdminLoginRequest,
     AdminLoginResponse,
+    AdminMessageRequest,
     AdminUpdateStatusRequest,
     GenericMessage,
 )
@@ -121,3 +122,39 @@ def update_case_status(
     )
     db.commit()
     return GenericMessage(message=f"Status {ticket_id} diubah ke {payload.new_status}")
+
+
+@router.post("/cases/{ticket_id}/message", response_model=GenericMessage)
+def send_message_to_reporter(
+    ticket_id: str,
+    payload: AdminMessageRequest,
+    admin=Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    report = db.query(Report).filter(Report.ticket_id == ticket_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Case tidak ditemukan")
+
+    db.add(
+        ReportMessage(
+            report_id=report.id,
+            sender_type="admin",
+            message_type="admin_message",
+            content=payload.message,
+        )
+    )
+    report.latest_response_to_reporter = payload.message
+    if payload.mark_needs_info:
+        old = report.status
+        report.status = "NEEDS_INFO"
+        db.add(
+            CaseStatusLog(
+                report_id=report.id,
+                old_status=old,
+                new_status=report.status,
+                actor=f"admin:{admin.username}",
+                notes="Admin meminta klarifikasi tambahan ke pelapor",
+            )
+        )
+    db.commit()
+    return GenericMessage(message="Pesan admin sudah dikirim ke pelapor")

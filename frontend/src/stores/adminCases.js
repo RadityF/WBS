@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { getAdminCaseDetail, getAdminCases, triggerKbReindex, updateAdminCaseStatus } from "../services/adminApi";
+import { getAdminCaseDetail, getAdminCases, sendAdminCaseMessage, triggerKbReindex, updateAdminCaseStatus } from "../services/adminApi";
 import { extractApiError } from "../services/http";
 import { useAdminAuthStore } from "./adminAuth";
 
@@ -17,6 +17,10 @@ export const useAdminCasesStore = defineStore("admin-cases", {
     updateLoading: false,
     updateError: "",
     updateMessage: "",
+
+    adminReplyLoading: false,
+    adminReplyError: "",
+    adminReplyMessage: "",
 
     reindexLoading: false,
     reindexError: "",
@@ -81,6 +85,22 @@ export const useAdminCasesStore = defineStore("admin-cases", {
         return false;
       } finally {
         this.updateLoading = false;
+      }
+    },
+    async sendMessage(ticketId, payload) {
+      this.adminReplyLoading = true;
+      this.adminReplyError = "";
+      this.adminReplyMessage = "";
+      try {
+        const data = await sendAdminCaseMessage(ticketId, payload);
+        this.adminReplyMessage = data.message || "Pesan terkirim";
+        return true;
+      } catch (error) {
+        this.handleAuthError(error);
+        this.adminReplyError = extractApiError(error, "Gagal mengirim pesan ke pelapor");
+        return false;
+      } finally {
+        this.adminReplyLoading = false;
       }
     },
     async reindexKb() {

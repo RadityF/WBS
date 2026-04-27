@@ -7,4 +7,5 @@ export const ADMIN_STATUS_OPTIONS = [
   "RESOLVED",
   "ARCHIVE",
   "AUTO_RESOLVED",
+  "REOPENED",
 ];

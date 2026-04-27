@@ -94,6 +94,31 @@
           </button>
         </div>
       </form>
+
+      <div class="section-spacer" style="border-top:1px solid var(--border);padding-top:1rem;">
+        <h2 class="title" style="font-size:1.15rem">Pesan ke Pelapor</h2>
+        <p class="muted small">Gunakan untuk meminta klarifikasi atau membuka komunikasi lanjutan. Pesan ini terlihat oleh pelapor.</p>
+
+        <form class="section-spacer" @submit.prevent="onSendMessage">
+          <label for="admin-message">Isi pesan</label>
+          <textarea id="admin-message" v-model.trim="adminMessagePayload.message" maxlength="3000" placeholder="Contoh: Mohon unggah bukti tambahan atau jelaskan kronologi..." required />
+          <div class="small muted">{{ adminMessagePayload.message.length }}/3000 karakter</div>
+
+          <label class="checkbox-row section-spacer">
+            <input v-model="adminMessagePayload.mark_needs_info" type="checkbox" />
+            <span>Ubah status menjadi perlu klarifikasi</span>
+          </label>
+
+          <div v-if="store.adminReplyError" class="alert error section-spacer">{{ store.adminReplyError }}</div>
+          <div v-if="store.adminReplyMessage" class="alert success section-spacer">{{ store.adminReplyMessage }}</div>
+
+          <div class="actions section-spacer">
+            <button class="btn primary" type="submit" :disabled="store.adminReplyLoading || !detail">
+              {{ store.adminReplyLoading ? "Mengirim..." : "Kirim pesan" }}
+            </button>
+          </div>
+        </form>
+      </div>
     </aside>
   </section>
 </template>
@@ -115,6 +140,11 @@ const store = useAdminCasesStore();
 const statusPayload = reactive({
   new_status: "",
   notes: "",
+});
+
+const adminMessagePayload = reactive({
+  message: "",
+  mark_needs_info: true,
 });
 
 const ticketId = computed(() => route.params.ticketId?.toString() || "");
@@ -146,6 +176,17 @@ async function onUpdateStatus() {
     notes: statusPayload.notes || null,
   });
   if (!ok) return;
+  await load();
+}
+
+async function onSendMessage() {
+  if (!ticketId.value || !adminMessagePayload.message) return;
+  const ok = await store.sendMessage(ticketId.value, {
+    message: adminMessagePayload.message,
+    mark_needs_info: adminMessagePayload.mark_needs_info,
+  });
+  if (!ok) return;
+  adminMessagePayload.message = "";
   await load();
 }
 </script>
