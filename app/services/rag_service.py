@@ -68,6 +68,10 @@ VIOLATION_ACTION_HINTS = {
     "suap",
     "pelicin",
     "gratifikasi",
+    "hadiah",
+    "bingkisan",
+    "tas bermerek",
+    "branded bag",
     "mark-up",
     "markup",
     "penggelapan",
@@ -118,6 +122,7 @@ EVIDENCE_HINTS = {
     "lampir",
     "foto",
     "video",
+    "melihat",
     "whatsapp",
     "alamat ip",
     "deteksi keamanan",
@@ -133,6 +138,11 @@ VIOLATION_SEVERITY_HINTS = {
     "pesan",
     "suap",
     "gratifikasi",
+    "hadiah",
+    "bingkisan",
+    "tas bermerek",
+    "branded bag",
+    "di bawah meja",
     "mark-up",
     "markup",
     "penggelapan",
@@ -236,6 +246,25 @@ NEGATIVE_VIOLATION_HINTS = {
     "tidak resmi",
     "forum online",
     "pihak luar",
+}
+
+GRATIFICATION_STRONG_HINTS = {
+    "gratifikasi",
+    "hadiah",
+    "bingkisan",
+    "tas bermerek",
+    "branded bag",
+    "jam tangan",
+    "vendor",
+}
+
+CONCEALMENT_HINTS = {
+    "sembunyi-sembunyi",
+    "sembunyi",
+    "diam-diam",
+    "di bawah meja",
+    "tanpa dilaporkan",
+    "tidak dideklarasikan",
 }
 
 
@@ -424,6 +453,8 @@ def _extract_case_signals(user_text: str) -> dict:
 
     evidence_hits = sum(1 for h in EVIDENCE_HINTS if h in text)
     severity_hits = sum(1 for h in VIOLATION_SEVERITY_HINTS if h in text)
+    gratification_hits = sum(1 for h in GRATIFICATION_STRONG_HINTS if h in text)
+    concealment_hits = sum(1 for h in CONCEALMENT_HINTS if h in text)
     score = sum([1 if has_actor else 0, 1 if has_action else 0, 1 if has_time else 0, 1 if has_location else 0, 1 if has_evidence else 0])
 
     return {
@@ -435,8 +466,51 @@ def _extract_case_signals(user_text: str) -> dict:
         "score": score,
         "evidence_hits": evidence_hits,
         "severity_hits": severity_hits,
+        "gratification_hits": gratification_hits,
+        "concealment_hits": concealment_hits,
         "bool_has_evidence": has_evidence,
     }
+
+
+def _has_strong_violation_signal(user_text: str) -> bool:
+    signal = _extract_case_signals(user_text)
+    score = int(signal["score"])
+    severity_hits = int(signal["severity_hits"])
+    gratification_hits = int(signal["gratification_hits"])
+    concealment_hits = int(signal["concealment_hits"])
+
+    if gratification_hits >= 1 and concealment_hits >= 1 and score >= 4:
+        return True
+    if severity_hits >= 2 and score >= 4:
+        return True
+    return False
+
+
+def _has_complete_gratification_signal(user_text: str) -> bool:
+    signal = _extract_case_signals(user_text)
+    score = int(signal["score"])
+    gratification_hits = int(signal["gratification_hits"])
+    concealment_hits = int(signal["concealment_hits"])
+    return score >= 5 and gratification_hits >= 1 and concealment_hits >= 1
+
+
+def _fallback_valid_gratification() -> AiOutput:
+    return AiOutput(
+        kategori="Gratifikasi",
+        skenario=1,
+        alasan=(
+            "Fallback sinyal kuat: narasi memuat dugaan gratifikasi dengan unsur pelaku, waktu, lokasi, tindakan, "
+            "dan indikasi penyembunyian yang lengkap."
+        ),
+        referensi_hukum=[],
+        urgensi="HIGH",
+        summary="Dugaan penerimaan barang bernilai dari pihak eksternal/vendor dalam konteks bisnis.",
+        respons_pelapor="Laporan Anda memuat dugaan gratifikasi yang memenuhi kriteria awal dan akan diteruskan untuk proses review/investigasi.",
+        follow_up_questions=[],
+        needs_human_review=True,
+        needs_escalation=True,
+        ticket_id=None,
+    )
 
 
 def _enforce_signal_consistency(parsed: AiOutput, user_text: str) -> AiOutput:
@@ -577,6 +651,9 @@ def _force_oos_needs_info_to_resolved(
     if parsed.skenario != 2 or top_source_group != "oos":
         return parsed
 
+    if _has_strong_violation_signal(user_text):
+        return parsed
+
     signal = _extract_case_signals(user_text)
     if int(signal["severity_hits"]) >= 1:
         return parsed
@@ -638,6 +715,77 @@ def _force_benign_to_oos(parsed: AiOutput, user_text: str) -> AiOutput:
         )
 
     return parsed
+
+
+def _force_strong_violation_out_of_oos(parsed: AiOutput, user_text: str) -> AiOutput:
+    if parsed.skenario != 3 or not _has_strong_violation_signal(user_text):
+        return parsed
+
+    if _has_complete_gratification_signal(user_text):
+        fallback = _fallback_valid_gratification()
+        return AiOutput(
+            kategori=parsed.kategori or fallback.kategori,
+            skenario=fallback.skenario,
+            alasan=fallback.alasan,
+            referensi_hukum=parsed.referensi_hukum,
+            pasal_utama=parsed.pasal_utama,
+            pasal_kandidat=parsed.pasal_kandidat,
+            urgensi=fallback.urgensi,
+            summary=parsed.summary or fallback.summary,
+            respons_pelapor=fallback.respons_pelapor,
+            follow_up_questions=[],
+            needs_human_review=True,
+            needs_escalation=True,
+            ticket_id=None,
+            redirect_to=None,
+        )
+
+    signal = _extract_case_signals(user_text)
+    score = int(signal["score"])
+
+    if _has_legal_reference(parsed) and score >= 4:
+        return AiOutput(
+            kategori=parsed.kategori or "Gratifikasi",
+            skenario=1,
+            alasan=(
+                "Narasi memuat indikasi dugaan pelanggaran kuat sehingga tidak dikategorikan sebagai out-of-scope "
+                f"(score_5w1h={score}/5)."
+            ),
+            referensi_hukum=parsed.referensi_hukum,
+            pasal_utama=parsed.pasal_utama,
+            pasal_kandidat=parsed.pasal_kandidat,
+            urgensi="HIGH" if parsed.urgensi in ("LOW", "MEDIUM") else parsed.urgensi,
+            summary=parsed.summary,
+            respons_pelapor="Laporan Anda memuat dugaan pelanggaran yang memenuhi kriteria awal dan akan diteruskan untuk proses review/investigasi.",
+            follow_up_questions=[],
+            needs_human_review=parsed.needs_human_review,
+            needs_escalation=parsed.needs_escalation,
+            ticket_id=None,
+            redirect_to=None,
+        )
+
+    return AiOutput(
+        kategori=parsed.kategori or "Dugaan pelanggaran",
+        skenario=2,
+        alasan=(
+            "Narasi memuat indikasi dugaan pelanggaran kuat, tetapi rujukan hukum dari retrieval belum cukup untuk validasi penuh."
+        ),
+        referensi_hukum=parsed.referensi_hukum,
+        pasal_utama=parsed.pasal_utama,
+        pasal_kandidat=parsed.pasal_kandidat,
+        urgensi="MEDIUM" if parsed.urgensi == "LOW" else parsed.urgensi,
+        summary=parsed.summary,
+        respons_pelapor="Laporan Anda memuat indikasi dugaan pelanggaran. Mohon lengkapi detail atau bukti tambahan bila tersedia agar dapat diproses lebih lanjut.",
+        follow_up_questions=[
+            "Apakah ada bukti pendukung seperti foto, video, chat, atau saksi?",
+            "Apakah pemberian tersebut berkaitan dengan keputusan bisnis, kontrak, atau vendor tertentu?",
+            "Apakah ada detail tambahan tentang pihak yang memberi dan menerima?",
+        ],
+        needs_human_review=True,
+        needs_escalation=False,
+        ticket_id=None,
+        redirect_to=None,
+    )
 
 
 def _keyword_boost(query_text: str, keywords: list[str]) -> float:
@@ -723,9 +871,12 @@ def _build_reason_with_legal_refs(ai: AiOutput) -> str:
 
 def _rank_hits_with_boost(user_text: str, hits):
     ranked = []
+    strong_violation = _has_strong_violation_signal(user_text)
     for hit in hits:
         keywords = hit.metadata.get("keywords") or []
         boost = _keyword_boost(user_text, keywords)
+        if strong_violation and hit.metadata.get("source_group") == "violation":
+            boost += 0.12
         adjusted = hit.score + boost
         ranked.append((adjusted, boost, hit))
 
@@ -824,6 +975,14 @@ def analyze_report(db: Session, report: Report, user_text: str) -> AiOutput:
 
     # Hard stop only: retrieval kosong total / tidak ada kandidat layak.
     if not valid_hits:
+        if _has_strong_violation_signal(masked):
+            ai = _fallback_valid_gratification() if _has_complete_gratification_signal(masked) else _fallback_needs_info()
+            if ai.skenario == 2:
+                ai.alasan = "Fallback sinyal kuat: narasi memuat indikasi dugaan pelanggaran meski retrieval belum menemukan konteks layak."
+            _persist_ai_result(db, report, ai, raw_output=json.dumps(ai.model_dump(), ensure_ascii=False))
+            _apply_ai_to_report(db, report, ai)
+            return ai
+
         ai = AiOutput(
             kategori=None,
             skenario=3,
@@ -914,6 +1073,7 @@ def analyze_report(db: Session, report: Report, user_text: str) -> AiOutput:
     parsed = _force_ambiguous_to_needs_info(parsed, masked)
     parsed = _promote_strong_evidence_to_s1(parsed, masked)
     parsed = _force_benign_to_oos(parsed, masked)
+    parsed = _force_strong_violation_out_of_oos(parsed, masked)
     parsed = _force_oos_needs_info_to_resolved(parsed, masked, top_source_group, top_category)
     raw = json.dumps(parsed.model_dump(), ensure_ascii=False)
 

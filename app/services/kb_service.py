@@ -59,7 +59,7 @@ def _extract_keywords(category: str, definition: str, sample: str) -> list[str]:
             base.add(token)
 
     hint_map = {
-        "Gratifikasi": ["hadiah", "vendor", "bingkisan", "jam tangan"],
+        "Gratifikasi": ["hadiah", "vendor", "bingkisan", "jam tangan", "tas bermerek", "branded bag"],
         "Suap (Bribery)": ["suap", "pelicin", "meloloskan", "tender"],
         "Korupsi / Fraud": ["mark-up", "markup", "penggelapan", "fraud"],
         "Konflik Kepentingan": ["keluarga", "titipan", "vendor", "benturan"],
