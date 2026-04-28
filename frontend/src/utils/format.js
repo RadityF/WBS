@@ -5,6 +5,7 @@ export function formatDate(value) {
   return new Intl.DateTimeFormat("id-ID", {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone: "Asia/Jakarta",
   }).format(date);
 }
 
@@ -23,7 +24,8 @@ export function statusLabel(status) {
     IN_REVIEW: "Sedang ditinjau",
     RESOLVED: "Selesai",
     ARCHIVE: "Diarsipkan",
-    AUTO_RESOLVED: "Dialihkan / bukan kategori WBS",
+    AUTO_RESOLVED: "Laporan ditutup",
+    REOPENED: "Dibuka kembali",
   };
   return labels[status] || String(status).replaceAll("_", " ");
 }

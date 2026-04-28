@@ -19,7 +19,7 @@
           <div class="key">Ticket ID</div>
           <div class="mono">{{ detail.ticket_id }}</div>
           <div class="key">Status</div>
-          <div>{{ detail.status }}</div>
+          <div>{{ statusLabel(detail.status) }}</div>
           <div class="key">Scenario</div>
           <div>{{ detail.scenario ?? "-" }}</div>
           <div class="key">Kategori</div>
@@ -75,7 +75,7 @@
           <select id="new-status" v-model="statusPayload.new_status" required>
             <option disabled value="">Pilih status</option>
             <option v-for="status in ADMIN_STATUS_OPTIONS" :key="status" :value="status">
-              {{ status }}
+              {{ statusLabel(status) }}
             </option>
           </select>
         </div>
@@ -130,7 +130,7 @@ import StatusBadge from "../../components/StatusBadge.vue";
 import { useAdminAuthStore } from "../../stores/adminAuth";
 import { useAdminCasesStore } from "../../stores/adminCases";
 import { ADMIN_STATUS_OPTIONS } from "../../utils/constants";
-import { formatDate } from "../../utils/format";
+import { formatDate, statusLabel } from "../../utils/format";
 
 const route = useRoute();
 const router = useRouter();

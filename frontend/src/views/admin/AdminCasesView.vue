@@ -11,7 +11,7 @@
         />
         <select v-model="selected" @change="onFilterChange" style="min-width:220px;">
           <option value="">Semua status</option>
-          <option v-for="status in ADMIN_STATUS_OPTIONS" :key="status" :value="status">{{ status }}</option>
+          <option v-for="status in ADMIN_STATUS_OPTIONS" :key="status" :value="status">{{ statusLabel(status) }}</option>
         </select>
         <button class="btn ghost" type="button" @click="load">Refresh</button>
       </div>
@@ -62,7 +62,7 @@ import StatusBadge from "../../components/StatusBadge.vue";
 import { useAdminAuthStore } from "../../stores/adminAuth";
 import { useAdminCasesStore } from "../../stores/adminCases";
 import { ADMIN_STATUS_OPTIONS } from "../../utils/constants";
-import { formatDate } from "../../utils/format";
+import { formatDate, statusLabel } from "../../utils/format";
 
 const store = useAdminCasesStore();
 const auth = useAdminAuthStore();

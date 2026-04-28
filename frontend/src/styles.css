@@ -77,11 +77,16 @@ a {
 }
 
 .badge.status-ai_validated,
-.badge.status-resolved,
-.badge.status-auto_resolved {
+.badge.status-resolved {
   background: #e7f5ee;
   border-color: #b9e8d3;
   color: #0f6f4f;
+}
+
+.badge.status-auto_resolved {
+  background: #ffefee;
+  border-color: #ffd1cf;
+  color: #8f1f1a;
 }
 
 .badge.status-needs_info,
@@ -93,7 +98,8 @@ a {
 
 .badge.status-submitted,
 .badge.status-in_review,
-.badge.status-archive {
+.badge.status-archive,
+.badge.status-reopened {
   background: #edf4ff;
   border-color: #cde0ff;
   color: #1e4f94;
