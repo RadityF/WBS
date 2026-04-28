@@ -44,12 +44,35 @@
           <h3 style="margin:.2rem 0 .55rem">Lampiran</h3>
           <div v-if="!detail.attachments?.length" class="empty">Tidak ada lampiran.</div>
           <div v-else class="list">
-            <div v-for="item in detail.attachments" :key="`${item.saved_path}_${item.filename}`" class="list-item small">
+            <div v-for="item in detail.attachments" :key="`${item.id}_${item.filename}`" class="list-item small">
               <div><strong>{{ item.filename }}</strong></div>
               <div class="muted">{{ item.content_type || "unknown" }}</div>
               <div class="mono">{{ item.saved_path }}</div>
               <div class="muted">{{ formatDate(item.created_at) }}</div>
+              <div class="actions section-spacer">
+                <button class="btn ghost small" type="button" :disabled="previewLoading" @click="onPreviewAttachment(item)">
+                  {{ previewLoading && activePreview?.id === item.id ? "Memuat..." : "Preview" }}
+                </button>
+                <button class="btn ghost small" type="button" :disabled="previewLoading" @click="onDownloadAttachment(item)">
+                  Download
+                </button>
+              </div>
             </div>
+          </div>
+          <div v-if="previewError" class="alert error section-spacer">{{ previewError }}</div>
+
+          <div v-if="activePreview?.url" class="section-spacer">
+            <h4 style="margin:.2rem 0 .45rem">Preview: {{ activePreview.filename }}</h4>
+            <div v-if="activePreview.type === 'image'" class="preview-box">
+              <img :src="activePreview.url" alt="Preview lampiran" class="preview-image" />
+            </div>
+            <div v-else-if="activePreview.type === 'video'" class="preview-box">
+              <video :src="activePreview.url" controls class="preview-video"></video>
+            </div>
+            <div v-else-if="activePreview.type === 'pdf'" class="preview-box">
+              <iframe :src="activePreview.url" class="preview-pdf" title="Preview PDF"></iframe>
+            </div>
+            <div v-else class="empty">Tipe file ini tidak dapat dipreview. Silakan download.</div>
           </div>
         </div>
 
@@ -124,13 +147,15 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import StatusBadge from "../../components/StatusBadge.vue";
+import { fetchAdminAttachmentPreview } from "../../services/adminApi";
 import { useAdminAuthStore } from "../../stores/adminAuth";
 import { useAdminCasesStore } from "../../stores/adminCases";
 import { ADMIN_STATUS_OPTIONS } from "../../utils/constants";
 import { formatDate, statusLabel } from "../../utils/format";
+import { extractApiError } from "../../services/http";
 
 const route = useRoute();
 const router = useRouter();
@@ -146,6 +171,10 @@ const adminMessagePayload = reactive({
   message: "",
   mark_needs_info: true,
 });
+
+const previewLoading = ref(false);
+const previewError = ref("");
+const activePreview = ref(null);
 
 const ticketId = computed(() => route.params.ticketId?.toString() || "");
 const detail = computed(() => store.detail);
@@ -163,6 +192,7 @@ onMounted(load);
 
 async function load() {
   if (!ticketId.value) return;
+  clearPreview();
   await store.fetchCaseDetail(ticketId.value);
   if (store.detail?.status) {
     statusPayload.new_status = store.detail.status;
@@ -189,4 +219,100 @@ async function onSendMessage() {
   adminMessagePayload.message = "";
   await load();
 }
+
+function clearPreview() {
+  if (activePreview.value?.url) {
+    URL.revokeObjectURL(activePreview.value.url);
+  }
+  activePreview.value = null;
+}
+
+function detectPreviewType(contentType, filename) {
+  const type = String(contentType || "").toLowerCase();
+  if (type.startsWith("image/")) return "image";
+  if (type.startsWith("video/")) return "video";
+  if (type.includes("pdf")) return "pdf";
+
+  const name = String(filename || "").toLowerCase();
+  if (name.endsWith(".pdf")) return "pdf";
+  if ([".png", ".jpg", ".jpeg", ".gif", ".webp"].some((ext) => name.endsWith(ext))) return "image";
+  if ([".mp4", ".mov", ".webm", ".mkv"].some((ext) => name.endsWith(ext))) return "video";
+  return "unknown";
+}
+
+async function onPreviewAttachment(item) {
+  if (!ticketId.value || !item?.id) return;
+  previewLoading.value = true;
+  previewError.value = "";
+
+  try {
+    const { blob, contentType } = await fetchAdminAttachmentPreview(ticketId.value, item.id);
+    const fileType = detectPreviewType(contentType || item.content_type, item.filename);
+    clearPreview();
+    activePreview.value = {
+      id: item.id,
+      filename: item.filename,
+      type: fileType,
+      url: URL.createObjectURL(blob),
+    };
+  } catch (error) {
+    previewError.value = extractApiError(error, "Gagal memuat preview lampiran");
+  } finally {
+    previewLoading.value = false;
+  }
+}
+
+async function onDownloadAttachment(item) {
+  if (!ticketId.value || !item?.id) return;
+  previewLoading.value = true;
+  previewError.value = "";
+  try {
+    const { blob } = await fetchAdminAttachmentPreview(ticketId.value, item.id);
+    const tempUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = tempUrl;
+    link.download = item.filename || "attachment";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(tempUrl);
+  } catch (error) {
+    previewError.value = extractApiError(error, "Gagal download lampiran");
+  } finally {
+    previewLoading.value = false;
+  }
+}
+
+onBeforeUnmount(() => {
+  clearPreview();
+});
 </script>
+
+<style scoped>
+.preview-box {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.6rem;
+  background: #fff;
+}
+
+.preview-image,
+.preview-video,
+.preview-pdf {
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+}
+
+.preview-image,
+.preview-video {
+  max-height: 420px;
+  object-fit: contain;
+  background: #000;
+}
+
+.preview-pdf {
+  height: 520px;
+  background: #f8f8f8;
+}
+</style>

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import os
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -86,6 +88,7 @@ def case_detail(ticket_id: str, _: object = Depends(get_current_admin), db: Sess
         ],
         attachments=[
             {
+                "id": a.id,
                 "filename": a.filename,
                 "saved_path": a.saved_path,
                 "content_type": a.content_type,
@@ -158,3 +161,32 @@ def send_message_to_reporter(
         )
     db.commit()
     return GenericMessage(message="Pesan admin sudah dikirim ke pelapor")
+
+
+@router.get("/cases/{ticket_id}/attachments/{attachment_id}/preview")
+def preview_case_attachment(
+    ticket_id: str,
+    attachment_id: int,
+    _: object = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    report = db.query(Report).filter(Report.ticket_id == ticket_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Case tidak ditemukan")
+
+    attachment = (
+        db.query(ReportAttachment)
+        .filter(ReportAttachment.id == attachment_id, ReportAttachment.report_id == report.id)
+        .first()
+    )
+    if not attachment:
+        raise HTTPException(status_code=404, detail="Lampiran tidak ditemukan")
+
+    if not attachment.saved_path or not os.path.isfile(attachment.saved_path):
+        raise HTTPException(status_code=404, detail="File lampiran tidak tersedia")
+
+    return FileResponse(
+        path=attachment.saved_path,
+        media_type=attachment.content_type or "application/octet-stream",
+        filename=attachment.filename,
+    )

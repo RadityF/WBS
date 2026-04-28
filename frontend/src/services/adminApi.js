@@ -31,3 +31,13 @@ export async function triggerKbReindex() {
   const { data } = await http.post("/v1/kb/reindex");
   return data;
 }
+
+export async function fetchAdminAttachmentPreview(ticketId, attachmentId) {
+  const response = await http.get(`/v1/admin/cases/${encodeURIComponent(ticketId)}/attachments/${attachmentId}/preview`, {
+    responseType: "blob",
+  });
+  return {
+    blob: response.data,
+    contentType: response.headers["content-type"] || "application/octet-stream",
+  };
+}
