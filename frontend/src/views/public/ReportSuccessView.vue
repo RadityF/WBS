@@ -9,7 +9,10 @@
 
     <div class="kv section-spacer">
       <div class="key">Kode akses</div>
-      <div class="access-code mono">{{ accessCode }}</div>
+      <div class="access-code-inline">
+        <span class="access-code mono">{{ accessCode }}</span>
+        <button class="btn ghost small" type="button" @click="copyAccessCode">Copy</button>
+      </div>
       <div class="key">Pesan sistem</div>
       <div>{{ result.message || "Laporan diterima" }}</div>
     </div>
@@ -20,7 +23,6 @@
     <div v-if="copyMessage" class="alert success section-spacer">{{ copyMessage }}</div>
 
     <div class="actions section-spacer">
-      <button class="btn primary" type="button" @click="copyAccessCode">Copy kode akses</button>
       <RouterLink class="btn ghost" :to="`/report/${encodeURIComponent(result.ticket_id)}`">Lihat detail status</RouterLink>
       <RouterLink class="btn ghost" to="/report/status">Cek status manual</RouterLink>
       <button class="btn" type="button" @click="clearAndBack">Buat laporan baru</button>
@@ -67,3 +69,12 @@ async function copyAccessCode() {
   copyMessage.value = "Kode akses berhasil disalin.";
 }
 </script>
+
+<style scoped>
+.access-code-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+</style>
