@@ -351,6 +351,118 @@ def _fallback_needs_info() -> AiOutput:
     )
 
 
+def _infer_case_topic(user_text: str, category: Optional[str]) -> str:
+    c = (category or "").lower()
+    t = user_text.lower()
+
+    if any(k in c for k in ("gratifikasi", "suap", "bribery")) or any(
+        k in t for k in ("gratifikasi", "suap", "pelicin", "hadiah", "bingkisan", "vendor", "tas bermerek", "branded bag")
+    ):
+        return "gratifikasi"
+
+    if any(k in c for k in ("fraud", "korupsi")) or any(
+        k in t for k in ("fraud", "korupsi", "markup", "mark-up", "penggelapan", "invoice")
+    ):
+        return "fraud"
+
+    if any(k in c for k in ("konflik", "kepentingan")) or any(
+        k in t for k in ("konflik kepentingan", "benturan", "keluarga", "saudara", "titipan")
+    ):
+        return "konflik"
+
+    if any(k in c for k in ("pelecehan", "harassment")) or any(
+        k in t for k in ("pelecehan", "seksual", "tidak senonoh", "menyentuh", "sentuh", "paksa")
+    ):
+        return "pelecehan"
+
+    if any(k in c for k in ("data breach", "pencurian data")) or any(
+        k in t for k in ("data", "database", "kebocoran", "copy", "akses")
+    ):
+        return "data"
+
+    if any(k in c for k in ("aset",)) or any(k in t for k in ("aset", "kendaraan", "operasional", "pribadi")):
+        return "aset"
+
+    return "umum"
+
+
+def _generate_contextual_followups(user_text: str, category: Optional[str]) -> list[str]:
+    signal = _extract_case_signals(user_text)
+    topic = _infer_case_topic(user_text, category)
+    questions: list[str] = []
+
+    def _add(q: str) -> None:
+        q_norm = q.strip().lower()
+        if not q_norm:
+            return
+        if any(existing.strip().lower() == q_norm for existing in questions):
+            return
+        questions.append(q)
+
+    if signal["has_actor"] == "TIDAK":
+        _add("Siapa pihak yang dilaporkan (jabatan/inisial) dan siapa pihak terkait lainnya?")
+    if signal["has_time"] == "TIDAK":
+        _add("Kapan kejadian terjadi (tanggal/jam/periode) agar bisa ditelusuri?")
+    if signal["has_location"] == "TIDAK":
+        _add("Di mana lokasi kejadian berlangsung (unit, ruangan, kota, atau kanal komunikasi)?")
+    if signal["has_evidence"] == "TIDAK":
+        _add("Apakah ada bukti pendukung seperti chat, email, foto, video, log, atau saksi?")
+
+    if topic == "gratifikasi":
+        _add("Apa bentuk pemberian/imbalan, perkiraan nilainya, dan dalam konteks keputusan bisnis apa?")
+        _add("Siapa pemberi dan penerima, serta apakah pemberian dilakukan terbuka atau tersembunyi?")
+        _add("Apakah ada bukti transaksi, komunikasi, foto, atau saksi yang mendukung?")
+    elif topic == "fraud":
+        _add("Dokumen atau transaksi apa yang diduga dimanipulasi, dan berapa nilai yang terdampak?")
+        _add("Siapa pihak yang menginisiasi, menyetujui, atau menerima manfaat dari tindakan tersebut?")
+        _add("Apakah ada bukti invoice, mutasi, approval, atau email yang bisa dilampirkan?")
+    elif topic == "konflik":
+        _add("Apa hubungan pribadi/keluarga antara pihak internal dengan pihak eksternal terkait kasus ini?")
+        _add("Keputusan bisnis/procurement apa yang diduga terpengaruh oleh konflik kepentingan tersebut?")
+        _add("Apakah ada bukti dokumen evaluasi, notulen, email, atau saksi?")
+    elif topic == "pelecehan":
+        _add("Apa bentuk tindakan/ucapan yang terjadi dan kepada siapa tindakan itu ditujukan?")
+        _add("Kapan dan di mana kejadian berlangsung, serta apakah terjadi berulang?")
+        _add("Apakah ada bukti chat, rekaman, CCTV, atau saksi yang mengetahui kejadian?")
+    elif topic == "data":
+        _add("Data apa yang diduga diakses/disalin/disebar dan dari sistem mana?")
+        _add("Siapa pihak yang diduga melakukan dan kapan aktivitas tersebut terjadi?")
+        _add("Apakah ada bukti teknis seperti log akses, screenshot, email, atau perangkat terkait?")
+    elif topic == "aset":
+        _add("Aset apa yang diduga disalahgunakan dan digunakan untuk kepentingan apa?")
+        _add("Kapan serta di lokasi mana penggunaan aset tersebut terjadi?")
+        _add("Apakah ada bukti pendukung seperti foto, GPS, log pemakaian, atau saksi?")
+
+    _add("Apa dampak atau risiko dari kejadian ini bagi perusahaan/tim?")
+    return questions[:3]
+
+
+def _apply_contextual_followups(parsed: AiOutput, user_text: str, category_hint: Optional[str]) -> AiOutput:
+    if parsed.skenario != 2:
+        return parsed
+
+    questions = _generate_contextual_followups(user_text, parsed.kategori or category_hint)
+    if not questions:
+        return parsed
+
+    return AiOutput(
+        kategori=parsed.kategori,
+        skenario=parsed.skenario,
+        alasan=parsed.alasan,
+        referensi_hukum=parsed.referensi_hukum,
+        pasal_utama=parsed.pasal_utama,
+        pasal_kandidat=parsed.pasal_kandidat,
+        urgensi=parsed.urgensi,
+        summary=parsed.summary,
+        respons_pelapor=parsed.respons_pelapor,
+        follow_up_questions=questions,
+        needs_human_review=parsed.needs_human_review,
+        needs_escalation=parsed.needs_escalation,
+        ticket_id=parsed.ticket_id,
+        redirect_to=parsed.redirect_to,
+    )
+
+
 def _fallback_oos_from_needs_info(parsed: AiOutput, top_category: Optional[str]) -> AiOutput:
     redirect = top_category or parsed.kategori or "GA/HR/IT"
     return AiOutput(
@@ -1075,6 +1187,7 @@ def analyze_report(db: Session, report: Report, user_text: str) -> AiOutput:
     parsed = _force_benign_to_oos(parsed, masked)
     parsed = _force_strong_violation_out_of_oos(parsed, masked)
     parsed = _force_oos_needs_info_to_resolved(parsed, masked, top_source_group, top_category)
+    parsed = _apply_contextual_followups(parsed, masked, top_category)
     raw = json.dumps(parsed.model_dump(), ensure_ascii=False)
 
     _persist_ai_result(db, report, parsed, raw_output=raw)
